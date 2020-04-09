@@ -11,6 +11,7 @@ function sign() {
     }
   }
   $task.fetch(url).then((response) => {
+    console.log(response.body)
     let data = response.body
     let title = `${cookieName}`
     if (data.indexOf('签名出错-2') >= 0) {
