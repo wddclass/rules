@@ -98,6 +98,7 @@ function showmsg() {
     const rewardSpace = `本次获得: ${$.daily.rewardSpace / 1024 / 1024}MB`
     const totalReward = `总共获得: ${$.daily.totalRewardSpace / 1024 / 1024}MB`
     $.desc = `${continuousDays}, ${rewardSpace}, ${totalReward}`
+    $.msg($.name, $.subt, $.desc)
     resove()
   })
 }
