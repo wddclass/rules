@@ -1,22 +1,27 @@
-const cookieName = 'bilibili2'
-const cookieKey = 'chavy_cookie_bilibili2'
+const cookieName = 'bilibili'
+const cookieKey = 'chavy_cookie_bilibili'
 const chavy = init()
 const cookieVal = chavy.getdata(cookieKey)
+let url = {
+  url: '',
+  headers: {
+    Cookie: cookieVal,
+    Origin: 'api.live.bilibili.com',
+    Referer: 'http://live.bilibili.com/',
+    Accept: 'application/json, text/javascript, */*; q=0.01',
+    'User-Agent':
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15'
+  }
+}
+const signUrl = `https://api.live.bilibili.com/sign/doSign`
+const getSignInfo = `https://api.live.bilibili.com/sign/GetSignInfo`
+const getRegionRanking = `http://api.bilibili.com/x/web-interface/ranking/region`
 
-sign()
+// sign()
+getAid()
 
 function sign() {
-  let url = {
-    url: `https://api.live.bilibili.com/sign/doSign`,
-    headers: {
-      Cookie: cookieVal
-    }
-  }
-  url.headers['Origin'] = 'api.live.bilibili.com'
-  url.headers['Referer'] = 'http://live.bilibili.com/'
-  url.headers['Accept'] = 'application/json, text/javascript, */*; q=0.01'
-  url.headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15'
-
+  url.url = signUrl
   chavy.get(url, (error, response, data) => {
     let result = JSON.parse(data)
     let title = `${cookieName}`
@@ -42,26 +47,42 @@ function sign() {
   chavy.done()
 }
 function getsigninfo() {
-  let url = {
-    url: `https://api.live.bilibili.com/sign/GetSignInfo`,
-    headers: {
-      Cookie: cookieVal
-    }
-  }
-  url.headers['Host'] = 'api.live.bilibili.com'
-  url.headers['Origin'] = 'http://live.bilibili.com'
-  url.headers['Referer'] = 'http://live.bilibili.com/'
-  url.headers['Accept'] = 'application/json, text/javascript, */*; q=0.01'
-  url.headers['User-Agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.4 Safari/605.1.15'
-
+  url.url = getSignInfo
   chavy.get(url, (error, response, data) => {
     let title = `${cookieName}`
     let subTitle = `签到结果: 成功 (重复签到)`
     let detail = ``
     let result = JSON.parse(data)
-    if (result && result.code == 0) detail = `本月累计: ${result.data.hadSignDays}/${result.data.allDays}次, 说明: ${result.data.text}`
+    if (result && result.code == 0)
+      detail = `本月累计: ${result.data.hadSignDays}/${result.data.allDays}次, 说明: ${result.data.text}`
     chavy.msg(title, subTitle, detail)
   })
+}
+function videoWatch() {
+  let playedTime = randomNum(0, 90) + 1
+  url.url = 'aid=' + aid + '&played_time' + playedTime
+}
+function getAid(cb) {
+  url.url = getRegionRanking
+  chavy.get(url, (error, response, data) => {
+    let title = `${cookieName}`
+    console.log(data)
+    let result = JSON.parse(data)
+    console.log(result)
+  })
+}
+function randomNum(minNum, maxNum) {
+  switch (arguments.length) {
+    case 1:
+      return parseInt(Math.random() * minNum + 1, 10)
+      break
+    case 2:
+      return parseInt(Math.random() * (maxNum - minNum + 1) + minNum, 10)
+      break
+    default:
+      return 0
+      break
+  }
 }
 function init() {
   isSurge = () => {
@@ -70,7 +91,7 @@ function init() {
   isQuanX = () => {
     return undefined === this.$task ? false : true
   }
-  getdata = (key) => {
+  getdata = key => {
     if (isSurge()) return $persistentStore.read(key)
     if (isQuanX()) return $prefs.valueForKey(key)
   }
@@ -82,14 +103,14 @@ function init() {
     if (isSurge()) $notification.post(title, subtitle, body)
     if (isQuanX()) $notify(title, subtitle, body)
   }
-  log = (message) => console.log(message)
+  log = message => console.log(message)
   get = (url, cb) => {
     if (isSurge()) {
       $httpClient.get(url, cb)
     }
     if (isQuanX()) {
       url.method = 'GET'
-      $task.fetch(url).then((resp) => cb(null, {}, resp.body))
+      $task.fetch(url).then(resp => cb(null, {}, resp.body))
     }
   }
   post = (url, cb) => {
@@ -98,7 +119,7 @@ function init() {
     }
     if (isQuanX()) {
       url.method = 'POST'
-      $task.fetch(url).then((resp) => cb(null, {}, resp.body))
+      $task.fetch(url).then(resp => cb(null, {}, resp.body))
     }
   }
   done = (value = {}) => {
