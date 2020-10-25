@@ -66,9 +66,11 @@ function getAid(cb) {
   url.url = getRegionRanking
   chavy.get(url, (error, response, data) => {
     let title = `${cookieName}`
-    console.log(data)
+    let subTitle = `签到结果: 成功 (重复签到)`
+    // console.log(data)
     let result = JSON.parse(data)
     console.log(result)
+    chavy.msg(title, subTitle, detail)
   })
 }
 function randomNum(minNum, maxNum) {
