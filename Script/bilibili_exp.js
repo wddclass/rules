@@ -25,6 +25,11 @@ const needCoin = `https://www.bilibili.com/plus/account/exp.php`
 const isCoinUrl = `https://api.bilibili.com/x/web-interface/archive/coins`
 const CoinAdd = `https://api.bilibili.com/x/web-interface/coin/add`
 
+const WATCH = true
+const SHARE = true
+const MANGA_SIGN = true
+const COIN_ADD = true
+
 let biliResult = [
   {
     title: '签到',
@@ -54,6 +59,14 @@ let userInfo,
   coins = 0,
   exp = 0
 
+// !(async () => {
+//   if (WATCH) await videoWatch()
+//   if (SHARE) await avShare()
+//   if (MANGA_SIGN) await mangaSign()
+//   if (COIN_ADD) await doCoinAdd()
+// })().finally(() => {
+//   finalToast()
+// })
 sign()
 
 // 登录签到
@@ -126,30 +139,6 @@ function mangaSign() {
     }
   })
 }
-
-// 投币
-function doCoinAdd() {
-  // 超过上限
-  // result.code == 34005
-  for (let i = 0; i < aidList.length; i++) {
-    const element = aidList[i]
-    url.url =
-      CoinAdd + '?aid=' + element + '&multiply=1&select_like=0&cross_domain=true&csrf=' + getCaption(cookieValArr[3])
-    if (numberOfCoins != 0) {
-      chavy.post(url, (error, response, data) => {
-        let result = JSON.parse(data)
-        if (result && result.code == 0) {
-          numberOfCoins = --numberOfCoins
-          coins = ++coins
-        }
-      })
-    }
-  }
-  biliResult[4].result = '已投' + coins + '币'
-  exp += 10 * conis
-  finalToast()
-}
-
 /**
  * 获取当前投币获得的经验值
  *
@@ -169,19 +158,39 @@ function expConfirm() {
         if (userInfo.money <= numberOfCoins) {
           numberOfCoins = parseInt(userInfo.money) - 1
         }
-        doCoinAdd()
+        coinReady()
       }
     } else {
       finalToast()
     }
   })
 }
-
+// 投币准备工作
+async function coinReady() {
+  let canCoinList = []
+  for (let i = 0; i < aidList.length; i++) {
+    let result = await isCoin(aidList[i])
+    if (!result) {
+      canCoinList.push(aidList[i])
+    }
+  }
+  if (numberOfCoins <= canCoinList.length) {
+    canCoinList = canCoinList.slice(0, numberOfCoins)
+  }
+  for (let i = 0; i < canCoinList.length; i++) {
+    await doCoinAdd(canCoinList[i])
+  }
+  biliResult[4].result = '已投' + coins + '币'
+  let coinsExp = 10 * coins
+  exp += coinsExp
+  finalToast()
+}
 function finalToast() {
-  let subTitle = biliResult[0].title + ':' + biliResult[0].result,
+  let subTitle = '',
     detail = ''
-  for (let i = 1; i < biliResult.length; i++) {
+  for (let i = 0; i < biliResult.length; i++) {
     const element = biliResult[i]
+    subTitle += element.result + (i == biliResult.length - 1 ? '' : ',')
     detail += element.title + ':' + element.result + '\n'
   }
   chavy.msg('BILIBILI 升级 +' + exp, subTitle, detail)
@@ -208,6 +217,25 @@ function isCoin(aid) {
       } else {
         resolve(false)
       }
+    })
+  })
+}
+
+/**
+ * 投币
+ *
+ * @param aid av号
+ */
+function doCoinAdd(aid) {
+  return new Promise(resolve => {
+    url.url =
+      CoinAdd + '?aid=' + aid + '&multiply=1&select_like=0&cross_domain=true&csrf=' + getCaption(cookieValArr[3])
+    chavy.post(url, (error, response, data) => {
+      let result = JSON.parse(data)
+      if (result && result.code == 0) {
+        coins = ++coins
+      }
+      resolve()
     })
   })
 }
