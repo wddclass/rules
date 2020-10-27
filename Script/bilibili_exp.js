@@ -156,7 +156,7 @@ function expConfirm() {
       } else {
         numberOfCoins = (50 - result.number) / 10
         if (userInfo.money <= numberOfCoins) {
-          numberOfCoins = parseInt(userInfo.money) - 1
+          numberOfCoins = parseInt(userInfo.money)
         }
         coinReady()
       }
