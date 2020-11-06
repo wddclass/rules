@@ -54,6 +54,8 @@ let biliResult = [
 ]
 
 let userInfo,
+  ridList = [4, 188, 211, 95, 171, 65],
+  ridIndex = 0,
   numberOfCoins = 0,
   aidList = [],
   coins = 0,
@@ -79,29 +81,43 @@ function sign() {
       exp += 5
       userInfo = result.data
     }
-    getAid()
+    videoWatch()
   })
 }
 
-// 获取4分区视频aid
+/**
+ * 获取分区视频a
+ * aid
+ * 4 游戏主分区
+ * 188 数码主分区
+ * 211 美食主分区
+ * 95 手机平板
+ * 171 电子竞技
+ * 65 网络游戏
+ */
 function getAid() {
-  chavy.get(
-    {
-      url: getRegionRanking + '?rid=4&day=3'
-    },
-    (error, response, data) => {
-      let result = JSON.parse(data)
-      for (let i = 0; i < result.data.length; i++) {
-        const element = result.data[i]
-        aidList.push(element.aid)
+  let rid = ridList[ridIndex]
+  return new Promise(resolve => {
+    chavy.get(
+      {
+        url: getRegionRanking + '?rid=' + rid
+      },
+      (error, response, data) => {
+        let result = JSON.parse(data)
+        let list = []
+        for (let i = 0; i < result.data.length; i++) {
+          const element = result.data[i]
+          list.push(element.aid)
+        }
+        resolve(list)
       }
-      detail = result.data[0].aid
-      videoWatch(detail)
-    }
-  )
+    )
+  })
 }
 // 视频观看
-function videoWatch(aid) {
+async function videoWatch() {
+  let aidList = await getAid()
+  aid = aidList[0]
   let playedTime = randomNum(0, 90) + 1
   url.url = videoHeartbeat + '?aid=' + aid + '&played_time=' + playedTime
   chavy.post(url, (error, response, data) => {
@@ -168,6 +184,7 @@ function expConfirm() {
 // 投币准备工作
 async function coinReady() {
   let canCoinList = []
+  aidList = await getAid()
   for (let i = 0; i < aidList.length; i++) {
     let result = await isCoin(aidList[i])
     if (!result) {
@@ -176,6 +193,11 @@ async function coinReady() {
   }
   if (numberOfCoins <= canCoinList.length) {
     canCoinList = canCoinList.slice(0, numberOfCoins)
+  }
+  if (numberOfCoins != 0 && canCoinList.length == 0) {
+    ridIndex = ++ridIndex
+    coinReady()
+    return
   }
   for (let i = 0; i < canCoinList.length; i++) {
     await doCoinAdd(canCoinList[i])
