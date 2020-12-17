@@ -173,7 +173,6 @@ function expConfirm() {
   chavy.get(url, (error, response, data) => {
     let result = JSON.parse(data)
     if (result) {
-      console.log(userInfo.money)
       if (result.number == 50) {
         biliResult[4].result = '已投完币'
         exp += result.number
