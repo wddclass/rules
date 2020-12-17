@@ -25,10 +25,10 @@ const needCoin = `https://www.bilibili.com/plus/account/exp.php`
 const isCoinUrl = `https://api.bilibili.com/x/web-interface/archive/coins`
 const CoinAdd = `https://api.bilibili.com/x/web-interface/coin/add`
 
-const WATCH = true
-const SHARE = true
-const MANGA_SIGN = true
-const COIN_ADD = true
+// const WATCH = true
+// const SHARE = true
+// const MANGA_SIGN = true
+// const COIN_ADD = true
 
 let biliResult = [
   {
@@ -59,7 +59,15 @@ let userInfo,
   numberOfCoins = 0,
   aidList = [],
   coins = 0,
-  exp = 0
+  exp = 0,
+  nextLevel = 0,
+  nextExp = 0,
+  currentExp = 0,
+  push = {
+    title: '',
+    subTitle: '',
+    detail: ''
+  }
 
 // !(async () => {
 //   if (WATCH) await videoWatch()
@@ -165,8 +173,9 @@ function expConfirm() {
   chavy.get(url, (error, response, data) => {
     let result = JSON.parse(data)
     if (result) {
+      console.log(userInfo.money)
       if (result.number == 50) {
-        biliResult[4].result = '已投币'
+        biliResult[4].result = '已投完币'
         exp += result.number
         finalToast()
       } else {
@@ -208,15 +217,25 @@ async function coinReady() {
   finalToast()
 }
 function finalToast() {
-  let subTitle = '',
-    detail = ''
-  for (let i = 0; i < biliResult.length; i++) {
-    const element = biliResult[i]
-    subTitle += element.result + (i == biliResult.length - 1 ? '' : ',')
-    detail += element.title + ':' + element.result + '\n'
-  }
-  chavy.msg('BILIBILI 升级 +' + exp, subTitle, detail)
-  chavy.done()
+  url.url = signUrl
+  chavy.get(url, (error, response, data) => {
+    let result = JSON.parse(data)
+    if (result && result.code == 0) {
+      userInfo = result.data
+      nextLevel = userInfo.level_info.current_level + 1
+      nextExp = userInfo.level_info.next_exp
+      currentExp = userInfo.level_info.current_exp
+      push.detail = '升级到Lv' + nextLevel + '还需' + Math.ceil((nextExp - currentExp - exp) / exp) + '天' + '\n'
+    }
+    for (let i = 0; i < biliResult.length; i++) {
+      const element = biliResult[i]
+      push.subTitle += element.result + (i == biliResult.length - 1 ? '' : ',')
+      push.detail += element.title + ':' + element.result + '\n'
+    }
+    push.title = 'BILIBILI 升级 +' + exp
+    chavy.msg(push.title, push.subTitle, push.detail)
+    chavy.done()
+  })
 }
 
 /**
