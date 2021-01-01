@@ -3,12 +3,11 @@ const cookieKey = 'chavy_cookie_bilibili'
 const chavy = init()
 const cookieVal = chavy.getdata(cookieKey)
 const cookieValArr = cookieVal.split(';')
-const cookieValVerify = cookieValArr[3] + ';' + cookieValArr[2] + ';' + cookieValArr[0]
 let url = {
   url: '',
   headers: {}
 }
-url.headers['Cookie'] = cookieValVerify
+url.headers['Cookie'] = cookieVal
 url.headers['Connection'] = 'keep-alive'
 url.headers['Referer'] = 'https://www.bilibili.com/'
 url.headers['User-Agent'] =
@@ -88,6 +87,10 @@ function sign() {
       biliResult[0].result = '成功'
       exp += 5
       userInfo = result.data
+    } else if (result.code == -101) {
+      chavy.msg('BILIBILI 升级', '账号未登陆', '')
+      chavy.done()
+      return
     }
     videoWatch()
   })
@@ -139,7 +142,7 @@ async function videoWatch() {
 }
 // 视频分享
 function avShare(aid) {
-  url.url = AvShare + '?aid=' + aid + '&csrf=' + getCaption(cookieValArr[3])
+  url.url = AvShare + '?aid=' + aid + '&csrf=' + getCaption('bili_jct')
   chavy.post(url, (error, response, data) => {
     mangaSign()
     let result = JSON.parse(data)
@@ -269,7 +272,7 @@ function isCoin(aid) {
 function doCoinAdd(aid) {
   return new Promise(resolve => {
     url.url =
-      CoinAdd + '?aid=' + aid + '&multiply=1&select_like=0&cross_domain=true&csrf=' + getCaption(cookieValArr[3])
+      CoinAdd + '?aid=' + aid + '&multiply=1&select_like=0&cross_domain=true&csrf=' + getCaption('bili_jct')
     chavy.post(url, (error, response, data) => {
       let result = JSON.parse(data)
       if (result && result.code == 0) {
@@ -281,10 +284,16 @@ function doCoinAdd(aid) {
 }
 
 // 获取cookie具体值
-function getCaption(obj) {
-  var index = obj.lastIndexOf('=')
-  obj = obj.substring(index + 1, obj.length)
-  return obj
+function getCaption(str) {
+  let val
+  for (let i = 0; i < cookieValArr.length; i++) {
+    const element = cookieValArr[i];
+    if (element.indexOf(str) != -1) {
+      var index = element.lastIndexOf('=')
+      val = element.substring(index + 1, element.length)
+    }
+  }
+  return val
 }
 
 // 生成随机整数
