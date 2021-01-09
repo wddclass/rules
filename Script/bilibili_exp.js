@@ -227,7 +227,7 @@ function finalToast() {
       nextLevel = userInfo.level_info.current_level + 1
       nextExp = userInfo.level_info.next_exp
       currentExp = userInfo.level_info.current_exp
-      push.detail = '升级到Lv' + nextLevel + '还需' + Math.ceil((nextExp - currentExp - exp) / exp) + '天' + '\n'
+      push.detail = '升级到Lv' + nextLevel + '还需' + Math.ceil((nextExp - currentExp - exp) / 65) + '天' + '\n'
     }
     for (let i = 0; i < biliResult.length; i++) {
       const element = biliResult[i]
