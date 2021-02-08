@@ -24,6 +24,9 @@ const needCoin = `https://www.bilibili.com/plus/account/exp.php`
 const isCoinUrl = `https://api.bilibili.com/x/web-interface/archive/coins`
 const CoinAdd = `https://api.bilibili.com/x/web-interface/coin/add`
 
+// 投币数
+const taskOfCoins = 1
+
 // const WATCH = true
 // const SHARE = true
 // const MANGA_SIGN = true
@@ -32,23 +35,23 @@ const CoinAdd = `https://api.bilibili.com/x/web-interface/coin/add`
 let biliResult = [
   {
     title: '签到',
-    result: '失败'
+    result: '❌'
   },
   {
-    title: '视频观看',
-    result: '失败'
+    title: '观看',
+    result: '❌'
   },
   {
-    title: '视频分享',
-    result: '失败'
+    title: '分享',
+    result: '❌'
   },
   {
-    title: '漫画签到',
-    result: '失败'
+    title: '漫签',
+    result: '❌'
   },
   {
-    title: '投币任务',
-    result: '失败'
+    title: '投币',
+    result: '❌'
   }
 ]
 
@@ -84,7 +87,7 @@ function sign() {
   chavy.get(url, (error, response, data) => {
     let result = JSON.parse(data)
     if (result && result.code == 0) {
-      biliResult[0].result = '成功'
+      biliResult[0].result = '✅'
       exp += 5
       userInfo = result.data
     } else if (result.code == -101) {
@@ -135,7 +138,7 @@ async function videoWatch() {
     avShare(aid)
     let result = JSON.parse(data)
     if (result && result.code == 0) {
-      biliResult[1].result = '成功'
+      biliResult[1].result = '✅'
       exp += 5
     }
   })
@@ -147,10 +150,10 @@ function avShare(aid) {
     mangaSign()
     let result = JSON.parse(data)
     if (result && result.code == 0) {
-      biliResult[2].result = '成功'
+      biliResult[2].result = '✅'
       exp += 5
     } else if (result && result.code == 71000) {
-      biliResult[2].result = '已分享'
+      biliResult[2].result = '☑️'
       exp += 5
     }
   })
@@ -162,7 +165,7 @@ function mangaSign() {
     expConfirm()
     let result = JSON.parse(data)
     if ((result && result.code == 0) || result.code == 'invalid_argument') {
-      biliResult[3].result = '成功'
+      biliResult[3].result = '✅'
     }
   })
 }
@@ -176,12 +179,12 @@ function expConfirm() {
   chavy.get(url, (error, response, data) => {
     let result = JSON.parse(data)
     if (result) {
-      if (result.number == 50) {
-        biliResult[4].result = '已投完币'
+      if (result.number == taskOfCoins * 10) {
+        biliResult[4].result = '*' + result.number / 10 +'☑️'
         exp += result.number
         finalToast()
       } else {
-        numberOfCoins = (50 - result.number) / 10
+        numberOfCoins = (taskOfCoins * 10 - result.number) / 10
         if (userInfo.money <= numberOfCoins) {
           numberOfCoins = parseInt(userInfo.money)
         }
@@ -213,7 +216,7 @@ async function coinReady() {
   for (let i = 0; i < canCoinList.length; i++) {
     await doCoinAdd(canCoinList[i])
   }
-  biliResult[4].result = '已投' + coins + '币'
+  biliResult[4].result = '*' + coins + '✅'
   let coinsExp = 10 * coins
   exp += coinsExp
   finalToast()
@@ -231,7 +234,8 @@ function finalToast() {
     }
     for (let i = 0; i < biliResult.length; i++) {
       const element = biliResult[i]
-      push.subTitle += element.result + (i == biliResult.length - 1 ? '' : ',')
+      // push.subTitle += element.title + element.result + (i == biliResult.length - 1 ? '' : ',')
+      push.subTitle += element.title + element.result
       push.detail += element.title + ':' + element.result + '\n'
     }
     push.title = 'BILIBILI 升级 +' + exp
@@ -301,13 +305,10 @@ function randomNum(minNum, maxNum) {
   switch (arguments.length) {
     case 1:
       return parseInt(Math.random() * minNum + 1, 10)
-      break
     case 2:
       return parseInt(Math.random() * (maxNum - minNum + 1) + minNum, 10)
-      break
     default:
       return 0
-      break
   }
 }
 function init() {
